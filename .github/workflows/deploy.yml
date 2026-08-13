@@ -22,9 +22,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      # enablement:true provisions the Pages site via the API if it does not
+      # already exist. Without it, this step 404s on a repo where Pages has
+      # never been turned on in Settings.
       - uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
       - uses: actions/upload-pages-artifact@v3
         with:
           path: .
+
       - id: deployment
         uses: actions/deploy-pages@v4
