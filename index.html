@@ -354,17 +354,32 @@ table.mx thead tr.g1 th{font-size:.9rem;color:var(--global-text-color);
 table.mx thead tr.g2 th{border-bottom:2px solid var(--global-divider-strong);font-size:.76rem}
 th.stg{border-left:2px solid var(--global-divider-color)}
 td.stg{border-left:2px solid var(--global-divider-color)}
+/* Pinned label columns. Metric pins at exactly Task's rendered width, so both
+   widths live here and the offset is derived, never restated as a literal.
+   border-box makes the declared width inclusive of padding; without it the
+   cells render 16px wider than declared and Metric slides under Task on scroll. */
+table.mx{--sk1-w:164px;--sk2-w:120px}
 th.sk1,td.sk1{position:sticky;left:0;z-index:6;background:var(--global-bg-color);
-  min-width:148px;max-width:148px;text-align:left;padding-left:.7rem}
-th.sk2,td.sk2{position:sticky;left:148px;z-index:6;background:var(--global-bg-color);
-  min-width:104px;max-width:104px;text-align:left;padding-left:.5rem;
+  width:var(--sk1-w);min-width:var(--sk1-w);max-width:var(--sk1-w);
+  box-sizing:border-box;text-align:center}
+th.sk2,td.sk2{position:sticky;left:var(--sk1-w);z-index:6;background:var(--global-bg-color);
+  width:var(--sk2-w);min-width:var(--sk2-w);max-width:var(--sk2-w);
+  box-sizing:border-box;text-align:left;
   box-shadow:2px 0 0 var(--global-divider-color)}
+/* table.mx th,table.mx td sets padding:0 and outranks the rules above, so the
+   pinned columns need their horizontal padding at matching specificity or the
+   header indents 8px further than its own values. */
+table.mx th.sk1,table.mx td.sk1,
+table.mx th.sk2,table.mx td.sk2{padding-left:.5rem;padding-right:.5rem}
 table.mx thead th.sk1,table.mx thead th.sk2{z-index:8}
+/* Task is a centred group label; Metric is a per-row label, so its header
+   sits left over its values. Needs to outrank thead th's text-align:center. */
+table.mx thead th.sk2{text-align:left}
 table.mx tbody td{border-bottom:1px solid var(--global-divider-color);vertical-align:middle;height:46px}
 td.sk1{font-size:.88rem;font-family:var(--global-font-slab)}
 td.sk2{font-size:.8rem;color:var(--global-text-color-light);font-variant-numeric:tabular-nums}
 tr.grpstart td{border-top:2px solid var(--global-divider-strong)}
-tr.hl td.sk1,tr.hl td.sk2{background:var(--global-card-bg-color)}
+tr.hl td.sk1,tr.hl td.sk2,td.sk1.hl{background:var(--global-card-bg-color)}
 td.colhl{background:rgba(7,41,77,.045)}
 html[data-theme="dark"] td.colhl{background:rgba(255,255,255,.05)}
 
@@ -823,9 +838,13 @@ function matrix(){
 
   let html="",delay=0;
   tsks.forEach(([id,label])=>{
-    metricsOf(id).forEach((m,mi)=>{
+    const mets=metricsOf(id);
+    mets.forEach((m,mi)=>{
+      /* one Task cell per task, spanning its metric rows, rather than a label
+         followed by blanks. vertical-align:middle then centres it in the group. */
       html+='<tr'+(mi===0?' class="grpstart"':'')+' data-task="'+id+'">'+
-        '<td class="sk1">'+(mi===0?label:"")+'</td><td class="sk2">'+m+'</td>';
+        (mi===0?'<td class="sk1" rowspan="'+mets.length+'">'+label+'</td>':'')+
+        '<td class="sk2">'+m+'</td>';
       stgs.forEach(si=>{
         pdks.forEach((p,pi)=>{
           const st=state(id,m,p,si),v=bval(id,m,p,si);
@@ -856,8 +875,12 @@ function matrix(){
   /* hover: cross-highlight row + column, plus tooltip */
   tb.querySelectorAll(".c").forEach(c=>{
     const td=c.parentElement,tr=td.parentElement,col=td.dataset.col;
+    /* the Task cell is rowspanned onto the group's first row, so it is not a
+       child of every tr. Resolve it once so hover highlights it from any row. */
+    const taskCell=tb.querySelector('tr[data-task="'+tr.dataset.task+'"] td.sk1');
     c.onmouseenter=e=>{
       tr.classList.add("hl");
+      if(taskCell)taskCell.classList.add("hl");
       tb.querySelectorAll('[data-col="'+col+'"]').forEach(x=>x.classList.add("colhl"));
       const[t,m,p,s]=c.dataset.tip.split("|");
       const b=bval(t,m,p,+s),ms=models(t,m,p,+s),beat=ms.filter(x=>better(x.v,b,m)).length;
@@ -875,6 +898,7 @@ function matrix(){
     c.onmousemove=e=>showTip(e,tip.innerHTML);
     c.onmouseleave=()=>{
       tr.classList.remove("hl");
+      if(taskCell)taskCell.classList.remove("hl");
       tb.querySelectorAll(".colhl").forEach(x=>x.classList.remove("colhl"));
       hideTip();
     };
