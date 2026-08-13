@@ -1,48 +1,44 @@
 # EDA-Schema Leaderboard — interaction mockup
 
-A click-through prototype of the benchmark leaderboard for
-[EDA-Schema-V2](https://arxiv.org/abs/2605.06952), built by the
-[Drexel ICE Lab](https://drexel-ice.github.io/).
+Click-through prototype for the [EDA-Schema-V2](https://arxiv.org/abs/2605.06952)
+benchmark, styled to match the [ICE Lab site](https://drexel-ice.github.io/).
 
-**Live:** _(add your URL here after first deploy)_
+## Layout
 
-## What is real and what is not
+- **Columns are design stages**, so reading left to right shows the OpenROAD
+  estimate converging toward the final value.
+- **Three multi-select filters** — PDKs, stages, tasks — each with all/none.
+  Selecting all 4 PDKs and all 5 stages reproduces Table 8: 20 data columns.
+- **All 46 metric rows always visible**, grouped by task, with Task and Metric
+  pinned while the grid scrolls horizontally.
+- **Legend sits above the grid** so the colour key is read before the data.
+
+## Theme provenance
+
+Matched against `drexel-ice/drexel-ice.github.io` (al-folio):
+
+| Element | Source |
+|---|---|
+| Roboto + Roboto Slab + Material Icons | exact font URL from `_config.yml` |
+| `--global-*` token names | al-folio `_themes.scss` convention |
+| `max_width: 930px` | `_config.yml`; the data grid uses `.container--wide` |
+| Dark mode `#1c1c1d` / `#e8e8e8` | al-folio `$grey-color-dark` / `$grey-color-light` |
+| Scroll progress bar, back-to-top, fixed navbar | `enable_progressbar`, `back_to_top`, `navbar_fixed` |
+| Footer text | `footer_text` in `_config.yml` |
+
+Drexel navy `#07294D` is used for links, active state and footer; gold `#FFC600`
+only as chrome accent — never on data, where it fails contrast.
+
+## Real vs synthetic
 
 | | Status |
 |---|---|
-| OpenROAD baselines, all 46 metrics × 4 PDKs × 5 stages | **Real** — transcribed from the [published Table 8](https://drexel-ice.github.io/eda-schema/) |
-| Void cells (wirelength before placement) | **Real** — 40 cells |
-| Saturated cells (baseline error 0 at global route) | **Real** — 132 cells |
-| "No ± error" cells (MPE/MNE undefined at global route) | **Real** — 24 cells |
-| Model names, scores, ranks, architectures, dates | **Synthetic placeholders** |
-
-Model results are deterministic filler generated from a seeded hash, so the
-numbers never change between reloads. They exist to exercise every UI path at
-full scale before real submissions land.
-
-## What it demonstrates
-
-- **Matrix** — 12 tasks × 4 PDKs, stage selector, expand a task into its metric
-  rows, five cell states each carrying a glyph so color is not the only signal
-- **Cell page** — the OpenROAD baseline pinned above a ranked list of 18 models,
-  filters, predicted-vs-actual and per-circuit charts
-- **Model page** — architecture diagram with block height scaled to layer width,
-  parameter counts, declared input features with a stage-legality badge, and the
-  model's rank in every other metric of the same task
+| OpenROAD baselines, 46 metrics x 4 PDKs x 5 stages | **Real**, from the [published Table 8](https://drexel-ice.github.io/eda-schema/) |
+| Void (40), saturated (132), no-± (24) cells | **Real** |
+| Model names, scores, ranks, architectures | **Synthetic**, seeded and deterministic |
 
 ## Running locally
 
-No build step, no dependencies.
-
 ```bash
 python3 -m http.server 8000
-# then open http://localhost:8000
 ```
-
-## Theme
-
-Mirrors the ICE Lab site (al-folio Jekyll theme): Roboto and Roboto Slab,
-`--global-*` CSS custom property names, lowercase page titles and nav labels,
-and a `[data-theme="dark"]` toggle. Drexel navy `#07294D` is used for links,
-active state, and the footer; gold `#FFC600` appears only as chrome accent —
-never on data, where it fails contrast.
