@@ -1,7 +1,16 @@
 # EDA-Schema Leaderboard
 
-Static, single-file interaction mockup of the EDA-Schema-V2 benchmark leaderboard for the Drexel ICE Lab.
-`index.html` is the entire app: markup, CSS and JS inline, no build step, no dependencies, no framework.
+Static interaction mockup of the EDA-Schema-V2 benchmark leaderboard for the Drexel ICE Lab.
+Three standalone pages, each self-contained: markup, CSS and JS inline, no build step, no dependencies, no framework.
+
+| Page | What it is |
+|---|---|
+| `index.html` | The matrix: 46 metric rows x 5 stages x 4 PDKs, drill-down to rankings and charts |
+| `explorer.html` | One submitted model: 3D unit view, op graph, weight matrices, untrained-checkpoint evidence |
+| `playground.html` | Pick a problem, choose schema attributes, shape a network, train it in-browser |
+
+Each page duplicates the theme CSS inline rather than sharing a stylesheet.
+A visual change to chrome, tokens or dark mode has to be made in all three or they drift.
 
 `README.md` covers what the UI does, the theme provenance table, and which numbers are real.
 Read it before changing behaviour; this file covers only what the code and README do not show.
@@ -16,22 +25,6 @@ There is no test suite, no linter and no package manager.
 Verification is driving the page in a browser (see Verifying a change).
 
 ## Gotchas
-
-### theme-drexel-ice.css is a hand-maintained duplicate
-
-`theme-drexel-ice.css` is byte-identical to the first CSS block inside index.html's `<style>` tag, up to the `/* ===== mockup banner ===== */` marker.
-`index.html` does not load it.
-It exists as a standalone export so the lab can drop it into their al-folio site's `static/css/` without renaming a single token.
-
-Editing either copy silently desynchronises them.
-Change both, then confirm they still match:
-
-```bash
-sed -n '/^<style>$/,/^\/\* ===== mockup banner ===== \*\/$/p' index.html | sed '1d;$d' > /tmp/inline.css
-diff <(sed 's/[[:space:]]*$//' /tmp/inline.css) <(sed 's/[[:space:]]*$//' theme-drexel-ice.css)
-```
-
-Only a single trailing blank line should differ.
 
 ### BASE is the only real data
 
@@ -62,10 +55,15 @@ For those, `better()` flips direction, `modelVal()` extrapolates toward a ceilin
 This is the easiest thing to break when touching ranking, sorting or cell-state code.
 Test a change against both a lower-is-better metric (MAE) and a higher-is-better one (R²).
 
-### Navigation is not routed
+### Routing is one-way: index writes params, the other two read them
 
-`show()` toggles `.hidden` across three sections.
-There is no URL state, so a reload always lands on the matrix and drill-down views cannot be linked to.
+`explorer.html` and `playground.html` restore their state from `new URLSearchParams(location.search)`, so a link carrying task, pdk, stage, model and circuit reopens the same view.
+`index.html` builds those query strings for outbound links but never reads or writes its own URL.
+Inside index, `show()` just toggles `.hidden` across sections, so a reload always lands on the matrix and its drill-down views cannot be linked to.
+
+Do not describe the site as fully deep-linkable.
+Adding real routing to index means adding history state there, not more query-string construction.
+
 `404.html` is a meta-refresh back to `/`, and `.nojekyll` stops Pages running Jekyll over the repo.
 
 ## Design rules that are load-bearing
@@ -88,8 +86,9 @@ Drive the affected path in a browser and assert on the DOM.
 - Matrix: default view is 46 rows x 10 columns; selecting all PDKs and all stages gives 20 columns and 920 cells.
 - Filters: toggle each of the three axes, and clear all three to check the empty-state copy composes correctly.
 - Cell page: 18 model rows plus one pinned baseline row, four populated charts, metric headers re-sort with a FLIP animation, raw/ratio toggle switches the values.
-- Model page: architecture blocks, KPI count-ups, per-metric ranks, both breadcrumb links, Escape back to matrix.
-- Both themes: check any colour you touched with a computed contrast ratio, not by eye.
+- Explorer: open it with `?task=&pdk=&stage=&model=` and confirm the breadcrumb and heading reflect the params, not defaults. Loading it bare must still render.
+- Playground: toggle feature groups, run one epoch and a full run, and reset. The untrained-checkpoint evidence copy has to stay consistent with what the weights actually show.
+- Both themes: check any colour you touched with a computed contrast ratio, not by eye. A theme change has to be applied to all three pages.
 
 After deploying, verify the live URL rather than trusting a green Actions run.
 
