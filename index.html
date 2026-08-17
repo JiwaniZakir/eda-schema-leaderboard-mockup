@@ -347,6 +347,9 @@ pre   { background: var(--global-code-bg-color); padding: 1rem;
 .mockbar button{margin-left:auto;font:inherit;font-size:.8rem;background:none;border:1px solid #C9A93C;
   color:#5c4708;border-radius:var(--r-pill);padding:.12rem .7rem;cursor:pointer}
 html[data-theme="dark"] .mockbar{background:#3a2f0d;border-bottom-color:#6b5a1e;color:#e8d79a}
+/* the button keeps its own colour, so the dark override has to restate it —
+   #5c4708 on #3a2f0d is 1.5:1 and effectively invisible */
+html[data-theme="dark"] .mockbar button{color:#e8d79a}
 
 /* ===== controls ===== */
 .ctrls{display:flex;flex-direction:column;gap:.5rem;margin-bottom:.9rem}
@@ -1781,9 +1784,12 @@ function matrix(){
   if(!stgs.length)miss.push("a design stage");
   if(!tsks.length)miss.push("a task");
   if(miss.length){
+    /* "a, b and c" — a plain join gives "a and b and c" once all three are off */
+    const list=miss.length<3?miss.join(" and "):
+      miss.slice(0,-1).join(", ")+" and "+miss[miss.length-1];
     th.innerHTML="";
     tb.innerHTML='<tr><td style="padding:2.5rem;text-align:center;'+
-      'color:var(--global-text-color-light)">Select at least '+miss.join(" and ")+'.</td></tr>';
+      'color:var(--global-text-color-light)">Select at least '+list+'.</td></tr>';
     return;
   }
   th.innerHTML='<tr class="g1"><th class="sk1" rowspan="2">Task</th>'+
